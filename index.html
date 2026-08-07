@@ -4,76 +4,113 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Assignment Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root{
-    --blue:#2f6fed; --bg:#f4f6fb; --card:#ffffff; --border:#e3e7f0;
-    --text:#1f2937; --muted:#6b7280; --pending:#f59e0b; --danger:#e0433c;
+    --brand:#4f46e5; --brand-dark:#4338ca; --brand-light:#eef0ff;
+    --bg:#f7f8fb; --card:#ffffff; --border:#e6e8f0;
+    --text:#111827; --muted:#6b7280;
+    --pending:#b45309; --pending-bg:#fef3e2;
+    --danger:#dc2626; --ok:#15803d; --ok-bg:#eafaf0;
+    --radius:12px; --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    background:var(--bg); color:var(--text);
+    margin:0; font-family:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
   }
   .center{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
   .card{
-    background:var(--card); border:1px solid var(--border); border-radius:14px;
-    padding:30px; width:100%; max-width:380px; box-shadow:0 4px 20px rgba(0,0,0,.04);
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:34px; width:100%; max-width:380px; box-shadow:var(--shadow);
   }
-  h1{font-size:20px; margin:0 0 4px;}
-  .sub{color:var(--muted); font-size:13px; margin:0 0 20px;}
+  .logo{display:flex; align-items:center; gap:8px; margin-bottom:22px;}
+  .logo .mark{width:34px; height:34px; border-radius:9px; background:var(--brand); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px;}
+  .logo .name{font-weight:700; font-size:16px;}
+  h1{font-size:19px; margin:0 0 4px; font-weight:700;}
+  .sub{color:var(--muted); font-size:13px; margin:0 0 22px;}
+  label{font-size:12.5px; font-weight:600; color:#374151; display:block; margin:0 0 5px;}
   input,select{
-    width:100%; padding:10px 12px; margin-bottom:10px; border:1px solid var(--border);
-    border-radius:8px; font-size:14px;
+    width:100%; padding:10px 12px; margin-bottom:14px; border:1px solid var(--border);
+    border-radius:9px; font-size:14px; font-family:inherit; background:#fff;
   }
-  button{
-    cursor:pointer; border:none; border-radius:8px; padding:10px 14px;
-    font-size:14px; font-weight:600;
+  input:focus,select:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-light);}
+  button{cursor:pointer; border:none; border-radius:9px; padding:10px 16px; font-size:14px; font-weight:600; font-family:inherit;}
+  button:disabled{opacity:.55; cursor:not-allowed;}
+  .primary{background:var(--brand); color:#fff; width:100%; transition:background .15s;}
+  .primary:hover:not(:disabled){background:var(--brand-dark);}
+  .link-btn{background:none; color:var(--brand); text-decoration:none; padding:0; font-weight:600;}
+  .link-btn:hover{text-decoration:underline;}
+  .msg{font-size:13px; margin:0 0 12px; padding:9px 12px; border-radius:9px;}
+  .msg.err{background:#fef2f2; color:var(--danger);}
+  .msg.ok{background:var(--ok-bg); color:var(--ok);}
+
+  #app{display:none; max-width:780px; margin:0 auto; padding:0 16px 60px;}
+  .navbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 0; margin-bottom:22px; border-bottom:1px solid var(--border);
   }
-  .primary{background:var(--blue); color:#fff; width:100%;}
-  .link-btn{background:none; color:var(--blue); text-decoration:underline; padding:0; font-weight:500;}
-  .msg{font-size:13px; margin:8px 0; padding:8px 10px; border-radius:8px;}
-  .msg.err{background:#fdeceb; color:var(--danger);}
-  .msg.ok{background:#eaf5ea; color:#22823a;}
+  .navbar .brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px;}
+  .navbar .brand .mark{width:30px; height:30px; border-radius:8px; background:var(--brand); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;}
+  .navbar .right{display:flex; align-items:center; gap:12px;}
+  .avatar{width:30px; height:30px; border-radius:50%; background:var(--brand-light); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
+  .badge{display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; letter-spacing:.02em;}
+  .badge.admin{background:var(--brand-light); color:var(--brand);}
+  .badge.student{background:#f1f2f6; color:var(--muted);}
+  .logout{background:none; color:var(--muted); font-size:13px; font-weight:500;}
+  .logout:hover{color:var(--danger);}
 
-  #app{display:none; max-width:760px; margin:0 auto; padding:24px 16px 60px;}
-  header{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
-  header .who{font-size:14px; color:var(--muted);}
-  .badge{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px;}
-  .badge.admin{background:#e6ecff; color:var(--blue);}
-  .badge.student{background:#eef2f7; color:var(--muted);}
-  .logout{background:none; color:var(--danger); font-size:13px;}
-
-  .crumbs{font-size:13px; margin-bottom:14px; color:var(--muted);}
-  .crumbs span{cursor:pointer; color:var(--blue);}
+  .crumbs{font-size:13px; margin-bottom:16px; color:var(--muted); display:flex; gap:6px; flex-wrap:wrap;}
+  .crumbs span{cursor:pointer; color:var(--brand); font-weight:500;}
   .crumbs span:hover{text-decoration:underline;}
+  .crumbs .sep{color:#cbd0da;}
 
-  .toolbar{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
-  .toolbar button{background:#fff; border:1px solid var(--border); color:var(--text);}
-  .toolbar button.primary{background:var(--blue); color:#fff; border:none;}
+  .toolbar{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .toolbar button{background:#fff; border:1px solid var(--border); color:var(--text); box-shadow:var(--shadow);}
+  .toolbar button:hover{border-color:var(--brand); color:var(--brand);}
+  .toolbar button.primary{background:var(--brand); color:#fff; border:none;}
+  .toolbar button.primary:hover{background:var(--brand-dark); color:#fff;}
 
-  .panel{
-    background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px;
-    margin-bottom:16px;
+  .panel{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:18px; box-shadow:var(--shadow);}
+  .panel h3{margin:0 0 16px; font-size:14.5px; font-weight:700;}
+
+  .segmented{display:flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; margin-bottom:14px;}
+  .segmented button{flex:1; background:#fff; border:none; border-radius:0; font-size:13px; color:var(--muted); padding:9px;}
+  .segmented button.active{background:var(--brand); color:#fff;}
+  .segmented button:not(:last-child){border-right:1px solid var(--border);}
+
+  .dropzone{
+    border:1.5px dashed var(--border); border-radius:10px; padding:22px; text-align:center;
+    color:var(--muted); font-size:13px; margin-bottom:14px; cursor:pointer; transition:.15s;
   }
-  .panel h3{margin:0 0 12px; font-size:14px;}
+  .dropzone:hover, .dropzone.drag{border-color:var(--brand); background:var(--brand-light); color:var(--brand);}
+  .dropzone input{display:none;}
+  .file-preview{display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:13px; color:var(--text);}
+  .file-preview img{width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid var(--border);}
+  .file-preview .chip{background:var(--brand-light); color:var(--brand); width:42px; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px;}
 
-  .item{
-    display:flex; align-items:center; gap:10px; padding:12px 10px;
-    border-bottom:1px solid var(--border);
-  }
+  .list{background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+  .item{display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background .1s;}
   .item:last-child{border-bottom:none;}
-  .item .icon{font-size:20px;}
+  .item:hover{background:#fafbfc;}
+  .item .thumb{width:36px; height:36px; border-radius:8px; object-fit:cover; flex-shrink:0;}
+  .item .chip{width:36px; height:36px; border-radius:8px; background:var(--brand-light); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
   .item .info{flex:1; min-width:0;}
-  .item .name{font-weight:600; font-size:14px; cursor:pointer;}
-  .item .name.link{color:var(--blue);}
+  .item .name{font-weight:600; font-size:13.5px; cursor:pointer;}
+  .item .name.link:hover{color:var(--brand); text-decoration:underline;}
   .item .meta{font-size:12px; color:var(--muted); margin-top:2px;}
   .item .actions{display:flex; gap:6px; flex-shrink:0;}
-  .item .actions button{padding:5px 8px; font-size:12px; background:#fff; border:1px solid var(--border);}
-  .item .actions button.approve{color:#22823a; border-color:#22823a;}
+  .item .actions button{padding:5px 9px; font-size:11.5px; background:#fff; border:1px solid var(--border); border-radius:7px;}
+  .item .actions button.approve{color:var(--ok); border-color:var(--ok);}
   .item .actions button.delete{color:var(--danger); border-color:var(--danger);}
-  .pill{font-size:11px; font-weight:700; padding:2px 7px; border-radius:20px; background:#fff7e6; color:var(--pending); margin-left:6px;}
-  .empty{color:var(--muted); font-size:13px; padding:14px 0; text-align:center;}
+  .pill{font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:var(--pending-bg); color:var(--pending); margin-left:7px;}
+  .empty{color:var(--muted); font-size:13px; padding:30px 0; text-align:center;}
 </style>
 </head>
 <body>
@@ -81,15 +118,21 @@
 <!-- ============ AUTH SCREEN ============ -->
 <div id="auth-screen" class="center">
   <div class="card">
-    <h1 id="auth-title">Log in</h1>
-    <p class="sub" id="auth-sub">Access your assignments</p>
+    <div class="logo"><div class="mark">A</div><div class="name">Assignment Portal</div></div>
+    <h1 id="auth-title">Welcome back</h1>
+    <p class="sub" id="auth-sub">Log in to view your assignments</p>
     <div id="auth-msg"></div>
 
-    <input id="full-name" type="text" placeholder="Full name" style="display:none;">
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+    <div id="name-field" style="display:none;">
+      <label>Full name</label>
+      <input id="full-name" type="text" placeholder="Jane Doe">
+    </div>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="you@school.edu">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••">
     <button class="primary" id="auth-submit">Log in</button>
-    <p style="text-align:center; margin-top:14px; font-size:13px;">
+    <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--muted);">
       <span id="auth-toggle-text">New here?</span>
       <button class="link-btn" id="auth-toggle">Create an account</button>
     </p>
@@ -98,32 +141,52 @@
 
 <!-- ============ APP SCREEN ============ -->
 <div id="app">
-  <header>
-    <div>
-      <strong>Assignment Portal</strong>
-      <span class="who" id="who-line"></span>
+  <div class="navbar">
+    <div class="brand"><div class="mark">A</div>Assignment Portal</div>
+    <div class="right">
+      <span id="role-badge"></span>
+      <div class="avatar" id="avatar"></div>
+      <button class="logout" id="logout-btn">Log out</button>
     </div>
-    <button class="logout" id="logout-btn">Log out</button>
-  </header>
+  </div>
 
   <div class="crumbs" id="crumbs"></div>
 
   <div class="toolbar">
-    <button class="primary" id="upload-toggle">+ Upload item</button>
-    <button id="folder-toggle" style="display:none;">+ New folder</button>
+    <button class="primary" id="upload-toggle">＋ Upload item</button>
+    <button id="folder-toggle" style="display:none;">＋ New folder</button>
   </div>
 
   <div class="panel" id="upload-panel" style="display:none;">
-    <h3>Upload assignment / book / link</h3>
-    <select id="up-type">
-      <option value="assignment">Assignment</option>
-      <option value="book">Book</option>
-      <option value="link">Link</option>
-    </select>
-    <input id="up-name" type="text" placeholder="Title / name">
-    <input id="up-content" type="text" placeholder="Link / URL">
+    <h3>Upload assignment, book, or link</h3>
+
+    <label>Type</label>
+    <div class="segmented" id="type-seg">
+      <button class="active" data-type="assignment">Assignment</button>
+      <button data-type="book">Book</button>
+      <button data-type="link">Link</button>
+    </div>
+
+    <label>Title</label>
+    <input id="up-name" type="text" placeholder="e.g. Chapter 4 Problem Set">
+
+    <div id="file-field">
+      <label>File</label>
+      <div class="dropzone" id="dropzone">
+        Click to choose a file, or drag it here<br>
+        <span style="font-size:11.5px;">PDF, Word, PowerPoint, image, zip…</span>
+        <input type="file" id="up-file" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt">
+      </div>
+      <div id="file-preview"></div>
+    </div>
+
+    <div id="link-field" style="display:none;">
+      <label>URL</label>
+      <input id="up-link" type="text" placeholder="https://...">
+    </div>
+
     <div id="up-msg"></div>
-    <button class="primary" id="up-submit">Submit for admin approval</button>
+    <button class="primary" id="up-submit">Submit</button>
   </div>
 
   <div id="items"></div>
@@ -133,24 +196,25 @@
 // ======================= CONFIG =======================
 const SUPABASE_URL = "https://zygioinewegktkdgklvv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_6_FzkR0PXRxzeB55hL3O1A_6-I41QJ3";
+const BUCKET = "uploads";
 // ========================================================
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
 
 let isSignup = false;
 let currentUser = null;
 let myRole = "student";
 let myName = "";
-let path = [{ id: null, name: "Home" }]; // breadcrumb stack
+let path = [{ id: null, name: "Home" }];
+let selectedType = "assignment";
 
-const $ = (id) => document.getElementById(id);
-
-// -------- AUTH SCREEN LOGIC --------
+// -------- AUTH SCREEN --------
 $("auth-toggle").onclick = () => {
   isSignup = !isSignup;
-  $("full-name").style.display = isSignup ? "block" : "none";
-  $("auth-title").textContent = isSignup ? "Create account" : "Log in";
-  $("auth-sub").textContent = isSignup ? "Sign up to view assignments" : "Access your assignments";
+  $("name-field").style.display = isSignup ? "block" : "none";
+  $("auth-title").textContent = isSignup ? "Create your account" : "Welcome back";
+  $("auth-sub").textContent = isSignup ? "Sign up to view assignments" : "Log in to view your assignments";
   $("auth-submit").textContent = isSignup ? "Sign up" : "Log in";
   $("auth-toggle-text").textContent = isSignup ? "Already have an account?" : "New here?";
   $("auth-toggle").textContent = isSignup ? "Log in" : "Create an account";
@@ -162,37 +226,25 @@ $("auth-submit").onclick = async () => {
   const password = $("password").value;
   const fullName = $("full-name").value.trim();
   $("auth-msg").innerHTML = "";
-
   if (!email || !password) return showAuthMsg("Enter email and password.", true);
 
   if (isSignup) {
     const { data, error } = await sb.auth.signUp({
-      email, password,
-      options: { data: { full_name: fullName || email } }
+      email, password, options: { data: { full_name: fullName || email } }
     });
     if (error) return showAuthMsg(error.message, true);
-    if (!data.session) {
-      showAuthMsg("Account created! Check your email to verify, then log in.", false);
-    } else {
-      startApp();
-    }
+    if (!data.session) showAuthMsg("Account created! Check your email to verify, then log in.", false);
+    else startApp();
   } else {
     const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) return showAuthMsg(error.message, true);
     startApp();
   }
 };
+function showAuthMsg(text, isErr) { $("auth-msg").innerHTML = `<div class="msg ${isErr ? "err" : "ok"}">${text}</div>`; }
 
-function showAuthMsg(text, isErr) {
-  $("auth-msg").innerHTML = `<div class="msg ${isErr ? "err" : "ok"}">${text}</div>`;
-}
+$("logout-btn").onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-$("logout-btn").onclick = async () => {
-  await sb.auth.signOut();
-  location.reload();
-};
-
-// -------- STARTUP: check if already logged in --------
 (async () => {
   const { data } = await sb.auth.getSession();
   if (data.session) startApp();
@@ -201,38 +253,75 @@ $("logout-btn").onclick = async () => {
 async function startApp() {
   const { data: { user } } = await sb.auth.getUser();
   currentUser = user;
-
   const { data: roleRow } = await sb.from("roles").select("role, full_name").eq("id", user.id).single();
   myRole = roleRow?.role || "student";
   myName = roleRow?.full_name || user.email;
 
   $("auth-screen").style.display = "none";
   $("app").style.display = "block";
-  $("who-line").innerHTML = `— ${myName} <span class="badge ${myRole}">${myRole}</span>`;
+  $("role-badge").innerHTML = `<span class="badge ${myRole}">${myRole}</span>`;
+  $("avatar").textContent = myName.trim().charAt(0).toUpperCase();
   $("folder-toggle").style.display = myRole === "admin" ? "inline-block" : "none";
 
   renderCrumbs();
   loadItems();
 }
 
-// -------- BREADCRUMBS / NAVIGATION --------
+// -------- BREADCRUMBS --------
 function renderCrumbs() {
-  $("crumbs").innerHTML = path
-    .map((p, i) => `<span data-i="${i}">${p.name}</span>`)
-    .join(" &nbsp;/&nbsp; ");
-  document.querySelectorAll("#crumbs span").forEach((el) => {
-    el.onclick = () => {
-      path = path.slice(0, Number(el.dataset.i) + 1);
-      renderCrumbs();
-      loadItems();
-    };
+  $("crumbs").innerHTML = path.map((p, i) =>
+    (i > 0 ? `<span class="sep">/</span>` : "") + `<span data-i="${i}">${p.name}</span>`
+  ).join("");
+  document.querySelectorAll("#crumbs span[data-i]").forEach((el) => {
+    el.onclick = () => { path = path.slice(0, Number(el.dataset.i) + 1); renderCrumbs(); loadItems(); };
   });
 }
+function goInto(id, name) { path.push({ id, name }); renderCrumbs(); loadItems(); }
 
-function goInto(id, name) {
-  path.push({ id, name });
-  renderCrumbs();
-  loadItems();
+// -------- TYPE SEGMENTED CONTROL --------
+document.querySelectorAll("#type-seg button").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll("#type-seg button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedType = btn.dataset.type;
+    $("file-field").style.display = selectedType === "link" ? "none" : "block";
+    $("link-field").style.display = selectedType === "link" ? "block" : "none";
+  };
+});
+
+// -------- FILE PICK / DRAG / PREVIEW --------
+$("dropzone").onclick = () => $("up-file").click();
+$("dropzone").ondragover = (e) => { e.preventDefault(); $("dropzone").classList.add("drag"); };
+$("dropzone").ondragleave = () => $("dropzone").classList.remove("drag");
+$("dropzone").ondrop = (e) => {
+  e.preventDefault(); $("dropzone").classList.remove("drag");
+  if (e.dataTransfer.files.length) { $("up-file").files = e.dataTransfer.files; showFilePreview(); }
+};
+$("up-file").onchange = showFilePreview;
+
+function showFilePreview() {
+  const file = $("up-file").files[0];
+  const box = $("file-preview");
+  if (!file) { box.innerHTML = ""; return; }
+  if (file.type.startsWith("image/")) {
+    box.innerHTML = `<div class="file-preview"><img src="${URL.createObjectURL(file)}"><span>${file.name}</span></div>`;
+  } else {
+    box.innerHTML = `<div class="file-preview"><div class="chip">${fileIcon(file.name)}</div><span>${file.name}</span></div>`;
+  }
+}
+
+function fileIcon(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  if (["jpg","jpeg","png","gif","webp","svg"].includes(ext)) return "🖼️";
+  if (ext === "pdf") return "📕";
+  if (["doc","docx"].includes(ext)) return "📄";
+  if (["ppt","pptx"].includes(ext)) return "📊";
+  if (["xls","xlsx","csv"].includes(ext)) return "📈";
+  if (ext === "zip") return "🗜️";
+  return "📎";
+}
+function isImage(nameOrUrl) {
+  return /\.(jpe?g|png|gif|webp|svg)(\?.*)?$/i.test(nameOrUrl || "");
 }
 
 // -------- LOAD + RENDER ITEMS --------
@@ -240,15 +329,13 @@ async function loadItems() {
   const parentId = path[path.length - 1].id;
   let query = sb.from("files").select("*").order("position", { ascending: true });
   query = parentId === null ? query.is("parent_id", null) : query.eq("parent_id", parentId);
-
   const { data, error } = await query;
   const box = $("items");
   if (error) { box.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
-  if (!data.length) { box.innerHTML = `<div class="empty">Nothing here yet.</div>`; return; }
+  if (!data.length) { box.innerHTML = `<div class="list"><div class="empty">Nothing here yet.</div></div>`; return; }
 
-  box.innerHTML = data.map((item, idx) => renderItem(item, idx, data.length)).join("");
+  box.innerHTML = `<div class="list">${data.map((item, idx) => renderItem(item, idx, data.length)).join("")}</div>`;
 
-  // wire up events
   data.forEach((item) => {
     const nameEl = document.getElementById("name-" + item.id);
     if (nameEl) nameEl.onclick = () => {
@@ -258,7 +345,7 @@ async function loadItems() {
     const approveBtn = document.getElementById("approve-" + item.id);
     if (approveBtn) approveBtn.onclick = () => approveItem(item.id);
     const deleteBtn = document.getElementById("delete-" + item.id);
-    if (deleteBtn) deleteBtn.onclick = () => deleteItem(item.id);
+    if (deleteBtn) deleteBtn.onclick = () => deleteItem(item.id, item.file_path);
     const upBtn = document.getElementById("up-" + item.id);
     if (upBtn) upBtn.onclick = () => move(data, idx, -1);
     const downBtn = document.getElementById("down-" + item.id);
@@ -267,10 +354,14 @@ async function loadItems() {
 }
 
 function renderItem(item, idx, total) {
-  const icons = { folder: "📁", assignment: "📝", book: "📖", link: "🔗" };
   const isPending = item.status === "pending";
   const mine = item.uploaded_by === currentUser.id;
   const canManage = myRole === "admin";
+
+  let thumb;
+  if (item.type === "folder") thumb = `<div class="chip">📁</div>`;
+  else if (isImage(item.content)) thumb = `<img class="thumb" src="${item.content}">`;
+  else thumb = `<div class="chip">${fileIcon(item.content || item.name)}</div>`;
 
   let actions = "";
   if (canManage) {
@@ -280,13 +371,12 @@ function renderItem(item, idx, total) {
     actions += `<button class="delete" id="delete-${item.id}">Delete</button>`;
   }
 
-  const meta = item.type === "folder"
-    ? "Folder"
-    : `${item.type} • by ${item.uploader_name || "?"} • ${new Date(item.created_at).toLocaleDateString()}`;
+  const meta = item.type === "folder" ? "Folder"
+    : `${item.type} • ${item.uploader_name || "?"} • ${new Date(item.created_at).toLocaleDateString()}`;
 
   return `
-    <div class="panel item">
-      <div class="icon">${icons[item.type] || "📄"}</div>
+    <div class="item">
+      ${thumb}
       <div class="info">
         <div class="name ${item.type !== "folder" ? "link" : ""}" id="name-${item.id}">
           ${item.name}${isPending ? `<span class="pill">${mine ? "pending" : "needs review"}</span>` : ""}
@@ -297,38 +387,51 @@ function renderItem(item, idx, total) {
     </div>`;
 }
 
-// -------- UPLOAD (student or admin) --------
+// -------- UPLOAD --------
 $("upload-toggle").onclick = () => {
   $("upload-panel").style.display = $("upload-panel").style.display === "none" ? "block" : "none";
 };
 
 $("up-submit").onclick = async () => {
-  const type = $("up-type").value;
   const name = $("up-name").value.trim();
-  const content = $("up-content").value.trim();
-  if (!name || !content) {
-    $("up-msg").innerHTML = `<div class="msg err">Enter both a name and a link.</div>`;
-    return;
+  const msg = $("up-msg");
+  msg.innerHTML = "";
+  if (!name) { msg.innerHTML = `<div class="msg err">Enter a title.</div>`; return; }
+
+  let contentUrl = "", filePath = null;
+  const submitBtn = $("up-submit");
+
+  if (selectedType === "link") {
+    contentUrl = $("up-link").value.trim();
+    if (!contentUrl) { msg.innerHTML = `<div class="msg err">Enter a URL.</div>`; return; }
+  } else {
+    const file = $("up-file").files[0];
+    if (!file) { msg.innerHTML = `<div class="msg err">Choose a file.</div>`; return; }
+    submitBtn.disabled = true; submitBtn.textContent = "Uploading…";
+    filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
+    const { error: upErr } = await sb.storage.from(BUCKET).upload(filePath, file);
+    submitBtn.disabled = false; submitBtn.textContent = "Submit";
+    if (upErr) { msg.innerHTML = `<div class="msg err">${upErr.message}</div>`; return; }
+    contentUrl = sb.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
   }
+
   const parentId = path[path.length - 1].id;
   const status = myRole === "admin" ? "approved" : "pending";
 
   const { error } = await sb.from("files").insert({
-    name, type, content,
-    parent_id: parentId,
-    status,
-    uploaded_by: currentUser.id,
-    uploader_name: myName,
+    name, type: selectedType, content: contentUrl, file_path: filePath,
+    parent_id: parentId, status,
+    uploaded_by: currentUser.id, uploader_name: myName,
     position: Date.now() % 1000000
   });
 
-  if (error) { $("up-msg").innerHTML = `<div class="msg err">${error.message}</div>`; return; }
-  $("up-msg").innerHTML = `<div class="msg ok">${status === "approved" ? "Added." : "Uploaded! Waiting for admin approval."}</div>`;
-  $("up-name").value = ""; $("up-content").value = "";
+  if (error) { msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  msg.innerHTML = `<div class="msg ok">${status === "approved" ? "Added." : "Uploaded! Waiting for admin approval."}</div>`;
+  $("up-name").value = ""; $("up-link").value = ""; $("up-file").value = ""; $("file-preview").innerHTML = "";
   loadItems();
 };
 
-// -------- NEW FOLDER (admin only) --------
+// -------- NEW FOLDER (admin) --------
 $("folder-toggle").onclick = async () => {
   const name = prompt("Folder name:");
   if (!name) return;
@@ -346,16 +449,14 @@ async function approveItem(id) {
   const { error } = await sb.from("files").update({ status: "approved" }).eq("id", id);
   if (error) alert(error.message); else loadItems();
 }
-
-async function deleteItem(id) {
+async function deleteItem(id, filePath) {
   if (!confirm("Delete this item? (subfolders/items inside will be deleted too)")) return;
+  if (filePath) await sb.storage.from(BUCKET).remove([filePath]);
   const { error } = await sb.from("files").delete().eq("id", id);
   if (error) alert(error.message); else loadItems();
 }
-
 async function move(list, idx, dir) {
-  const other = list[idx + dir];
-  const self = list[idx];
+  const other = list[idx + dir], self = list[idx];
   if (!other) return;
   await sb.from("files").update({ position: other.position }).eq("id", self.id);
   await sb.from("files").update({ position: self.position }).eq("id", other.id);
