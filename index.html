@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --blue:#2f6fed; --bg:#f4f6fb; --card:#ffffff; --border:#e3e7f0;
+    --text:#1f2937; --muted:#6b7280; --pending:#f59e0b; --danger:#e0433c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+  .center{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:30px; width:100%; max-width:380px; box-shadow:0 4px 20px rgba(0,0,0,.04);
+  }
+  h1{font-size:20px; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:13px; margin:0 0 20px;}
+  input,select{
+    width:100%; padding:10px 12px; margin-bottom:10px; border:1px solid var(--border);
+    border-radius:8px; font-size:14px;
+  }
+  button{
+    cursor:pointer; border:none; border-radius:8px; padding:10px 14px;
+    font-size:14px; font-weight:600;
+  }
+  .primary{background:var(--blue); color:#fff; width:100%;}
+  .link-btn{background:none; color:var(--blue); text-decoration:underline; padding:0; font-weight:500;}
+  .msg{font-size:13px; margin:8px 0; padding:8px 10px; border-radius:8px;}
+  .msg.err{background:#fdeceb; color:var(--danger);}
+  .msg.ok{background:#eaf5ea; color:#22823a;}
+
+  #app{display:none; max-width:760px; margin:0 auto; padding:24px 16px 60px;}
+  header{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+  header .who{font-size:14px; color:var(--muted);}
+  .badge{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px;}
+  .badge.admin{background:#e6ecff; color:var(--blue);}
+  .badge.student{background:#eef2f7; color:var(--muted);}
+  .logout{background:none; color:var(--danger); font-size:13px;}
+
+  .crumbs{font-size:13px; margin-bottom:14px; color:var(--muted);}
+  .crumbs span{cursor:pointer; color:var(--blue);}
+  .crumbs span:hover{text-decoration:underline;}
+
+  .toolbar{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .toolbar button{background:#fff; border:1px solid var(--border); color:var(--text);}
+  .toolbar button.primary{background:var(--blue); color:#fff; border:none;}
+
+  .panel{
+    background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px;
+    margin-bottom:16px;
+  }
+  .panel h3{margin:0 0 12px; font-size:14px;}
+
+  .item{
+    display:flex; align-items:center; gap:10px; padding:12px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  .item:last-child{border-bottom:none;}
+  .item .icon{font-size:20px;}
+  .item .info{flex:1; min-width:0;}
+  .item .name{font-weight:600; font-size:14px; cursor:pointer;}
+  .item .name.link{color:var(--blue);}
+  .item .meta{font-size:12px; color:var(--muted); margin-top:2px;}
+  .item .actions{display:flex; gap:6px; flex-shrink:0;}
+  .item .actions button{padding:5px 8px; font-size:12px; background:#fff; border:1px solid var(--border);}
+  .item .actions button.approve{color:#22823a; border-color:#22823a;}
+  .item .actions button.delete{color:var(--danger); border-color:var(--danger);}
+  .pill{font-size:11px; font-weight:700; padding:2px 7px; border-radius:20px; background:#fff7e6; color:var(--pending); margin-left:6px;}
+  .empty{color:var(--muted); font-size:13px; padding:14px 0; text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="auth-screen" class="center">
+  <div class="card">
+    <h1 id="auth-title">Log in</h1>
+    <p class="sub" id="auth-sub">Access your assignments</p>
+    <div id="auth-msg"></div>
+
+    <input id="full-name" type="text" placeholder="Full name" style="display:none;">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button class="primary" id="auth-submit">Log in</button>
+    <p style="text-align:center; margin-top:14px; font-size:13px;">
+      <span id="auth-toggle-text">New here?</span>
+      <button class="link-btn" id="auth-toggle">Create an account</button>
+    </p>
+  </div>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="app">
+  <header>
+    <div>
+      <strong>Assignment Portal</strong>
+      <span class="who" id="who-line"></span>
+    </div>
+    <button class="logout" id="logout-btn">Log out</button>
+  </header>
+
+  <div class="crumbs" id="crumbs"></div>
+
+  <div class="toolbar">
+    <button class="primary" id="upload-toggle">+ Upload item</button>
+    <button id="folder-toggle" style="display:none;">+ New folder</button>
+  </div>
+
+  <div class="panel" id="upload-panel" style="display:none;">
+    <h3>Upload assignment / book / link</h3>
+    <select id="up-type">
+      <option value="assignment">Assignment</option>
+      <option value="book">Book</option>
+      <option value="link">Link</option>
+    </select>
+    <input id="up-name" type="text" placeholder="Title / name">
+    <input id="up-content" type="text" placeholder="Link / URL">
+    <div id="up-msg"></div>
+    <button class="primary" id="up-submit">Submit for admin approval</button>
+  </div>
+
+  <div id="items"></div>
+</div>
+
+<script>
+// ======================= CONFIG =======================
+const SUPABASE_URL = "https://zygioinewegktkdgklvv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_6_FzkR0PXRxzeB55hL3O1A_6-I41QJ3";
+// ========================================================
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let isSignup = false;
+let currentUser = null;
+let myRole = "student";
+let myName = "";
+let path = [{ id: null, name: "Home" }]; // breadcrumb stack
+
+const $ = (id) => document.getElementById(id);
+
+// -------- AUTH SCREEN LOGIC --------
+$("auth-toggle").onclick = () => {
+  isSignup = !isSignup;
+  $("full-name").style.display = isSignup ? "block" : "none";
+  $("auth-title").textContent = isSignup ? "Create account" : "Log in";
+  $("auth-sub").textContent = isSignup ? "Sign up to view assignments" : "Access your assignments";
+  $("auth-submit").textContent = isSignup ? "Sign up" : "Log in";
+  $("auth-toggle-text").textContent = isSignup ? "Already have an account?" : "New here?";
+  $("auth-toggle").textContent = isSignup ? "Log in" : "Create an account";
+  $("auth-msg").innerHTML = "";
+};
+
+$("auth-submit").onclick = async () => {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const fullName = $("full-name").value.trim();
+  $("auth-msg").innerHTML = "";
+
+  if (!email || !password) return showAuthMsg("Enter email and password.", true);
+
+  if (isSignup) {
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: { data: { full_name: fullName || email } }
+    });
+    if (error) return showAuthMsg(error.message, true);
+    if (!data.session) {
+      showAuthMsg("Account created! Check your email to verify, then log in.", false);
+    } else {
+      startApp();
+    }
+  } else {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return showAuthMsg(error.message, true);
+    startApp();
+  }
+};
+
+function showAuthMsg(text, isErr) {
+  $("auth-msg").innerHTML = `<div class="msg ${isErr ? "err" : "ok"}">${text}</div>`;
+}
+
+$("logout-btn").onclick = async () => {
+  await sb.auth.signOut();
+  location.reload();
+};
+
+// -------- STARTUP: check if already logged in --------
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (data.session) startApp();
+})();
+
+async function startApp() {
+  const { data: { user } } = await sb.auth.getUser();
+  currentUser = user;
+
+  const { data: roleRow } = await sb.from("roles").select("role, full_name").eq("id", user.id).single();
+  myRole = roleRow?.role || "student";
+  myName = roleRow?.full_name || user.email;
+
+  $("auth-screen").style.display = "none";
+  $("app").style.display = "block";
+  $("who-line").innerHTML = `— ${myName} <span class="badge ${myRole}">${myRole}</span>`;
+  $("folder-toggle").style.display = myRole === "admin" ? "inline-block" : "none";
+
+  renderCrumbs();
+  loadItems();
+}
+
+// -------- BREADCRUMBS / NAVIGATION --------
+function renderCrumbs() {
+  $("crumbs").innerHTML = path
+    .map((p, i) => `<span data-i="${i}">${p.name}</span>`)
+    .join(" &nbsp;/&nbsp; ");
+  document.querySelectorAll("#crumbs span").forEach((el) => {
+    el.onclick = () => {
+      path = path.slice(0, Number(el.dataset.i) + 1);
+      renderCrumbs();
+      loadItems();
+    };
+  });
+}
+
+function goInto(id, name) {
+  path.push({ id, name });
+  renderCrumbs();
+  loadItems();
+}
+
+// -------- LOAD + RENDER ITEMS --------
+async function loadItems() {
+  const parentId = path[path.length - 1].id;
+  let query = sb.from("files").select("*").order("position", { ascending: true });
+  query = parentId === null ? query.is("parent_id", null) : query.eq("parent_id", parentId);
+
+  const { data, error } = await query;
+  const box = $("items");
+  if (error) { box.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  if (!data.length) { box.innerHTML = `<div class="empty">Nothing here yet.</div>`; return; }
+
+  box.innerHTML = data.map((item, idx) => renderItem(item, idx, data.length)).join("");
+
+  // wire up events
+  data.forEach((item) => {
+    const nameEl = document.getElementById("name-" + item.id);
+    if (nameEl) nameEl.onclick = () => {
+      if (item.type === "folder") goInto(item.id, item.name);
+      else if (item.content) window.open(item.content, "_blank");
+    };
+    const approveBtn = document.getElementById("approve-" + item.id);
+    if (approveBtn) approveBtn.onclick = () => approveItem(item.id);
+    const deleteBtn = document.getElementById("delete-" + item.id);
+    if (deleteBtn) deleteBtn.onclick = () => deleteItem(item.id);
+    const upBtn = document.getElementById("up-" + item.id);
+    if (upBtn) upBtn.onclick = () => move(data, idx, -1);
+    const downBtn = document.getElementById("down-" + item.id);
+    if (downBtn) downBtn.onclick = () => move(data, idx, 1);
+  });
+}
+
+function renderItem(item, idx, total) {
+  const icons = { folder: "📁", assignment: "📝", book: "📖", link: "🔗" };
+  const isPending = item.status === "pending";
+  const mine = item.uploaded_by === currentUser.id;
+  const canManage = myRole === "admin";
+
+  let actions = "";
+  if (canManage) {
+    if (isPending) actions += `<button class="approve" id="approve-${item.id}">Approve</button>`;
+    if (idx > 0) actions += `<button id="up-${item.id}">↑</button>`;
+    if (idx < total - 1) actions += `<button id="down-${item.id}">↓</button>`;
+    actions += `<button class="delete" id="delete-${item.id}">Delete</button>`;
+  }
+
+  const meta = item.type === "folder"
+    ? "Folder"
+    : `${item.type} • by ${item.uploader_name || "?"} • ${new Date(item.created_at).toLocaleDateString()}`;
+
+  return `
+    <div class="panel item">
+      <div class="icon">${icons[item.type] || "📄"}</div>
+      <div class="info">
+        <div class="name ${item.type !== "folder" ? "link" : ""}" id="name-${item.id}">
+          ${item.name}${isPending ? `<span class="pill">${mine ? "pending" : "needs review"}</span>` : ""}
+        </div>
+        <div class="meta">${meta}</div>
+      </div>
+      <div class="actions">${actions}</div>
+    </div>`;
+}
+
+// -------- UPLOAD (student or admin) --------
+$("upload-toggle").onclick = () => {
+  $("upload-panel").style.display = $("upload-panel").style.display === "none" ? "block" : "none";
+};
+
+$("up-submit").onclick = async () => {
+  const type = $("up-type").value;
+  const name = $("up-name").value.trim();
+  const content = $("up-content").value.trim();
+  if (!name || !content) {
+    $("up-msg").innerHTML = `<div class="msg err">Enter both a name and a link.</div>`;
+    return;
+  }
+  const parentId = path[path.length - 1].id;
+  const status = myRole === "admin" ? "approved" : "pending";
+
+  const { error } = await sb.from("files").insert({
+    name, type, content,
+    parent_id: parentId,
+    status,
+    uploaded_by: currentUser.id,
+    uploader_name: myName,
+    position: Date.now() % 1000000
+  });
+
+  if (error) { $("up-msg").innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  $("up-msg").innerHTML = `<div class="msg ok">${status === "approved" ? "Added." : "Uploaded! Waiting for admin approval."}</div>`;
+  $("up-name").value = ""; $("up-content").value = "";
+  loadItems();
+};
+
+// -------- NEW FOLDER (admin only) --------
+$("folder-toggle").onclick = async () => {
+  const name = prompt("Folder name:");
+  if (!name) return;
+  const parentId = path[path.length - 1].id;
+  const { error } = await sb.from("files").insert({
+    name, type: "folder", parent_id: parentId, status: "approved",
+    uploaded_by: currentUser.id, uploader_name: myName,
+    position: Date.now() % 1000000
+  });
+  if (error) alert(error.message); else loadItems();
+};
+
+// -------- ADMIN ACTIONS --------
+async function approveItem(id) {
+  const { error } = await sb.from("files").update({ status: "approved" }).eq("id", id);
+  if (error) alert(error.message); else loadItems();
+}
+
+async function deleteItem(id) {
+  if (!confirm("Delete this item? (subfolders/items inside will be deleted too)")) return;
+  const { error } = await sb.from("files").delete().eq("id", id);
+  if (error) alert(error.message); else loadItems();
+}
+
+async function move(list, idx, dir) {
+  const other = list[idx + dir];
+  const self = list[idx];
+  if (!other) return;
+  await sb.from("files").update({ position: other.position }).eq("id", self.id);
+  await sb.from("files").update({ position: self.position }).eq("id", other.id);
+  loadItems();
+}
+</script>
+</body>
+</html>
